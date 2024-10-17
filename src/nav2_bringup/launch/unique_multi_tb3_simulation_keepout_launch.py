@@ -30,7 +30,7 @@ from launch.actions import (DeclareLaunchArgument, ExecuteProcess, GroupAction,
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, TextSubstitution
-
+from launch.substitutions import ThisLaunchFileDir
 
 def generate_launch_description():
     # Get the launch directory
@@ -38,11 +38,13 @@ def generate_launch_description():
     launch_dir = os.path.join(bringup_dir, 'launch')
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros') #追記
 
+    KEEPOUT_FILTER_LAUNCH = '/keepout.launch.py'
+
     # それぞれのロボットの初期設定
     # name以外はGazeboの初期位置なので実機では設定不要
     robots = [
         {'name': 'robot1', 'x_pose': 7.0, 'y_pose': 2.5, 'z_pose': 0.01, 'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0},
-        #{'name': 'robot2', 'x_pose': 7.0, 'y_pose': -2.5, 'z_pose': 0.01,'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0}
+        {'name': 'robot2', 'x_pose': 7.0, 'y_pose': -2.5, 'z_pose': 0.01,'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0}
         ]
 
     # Simulation settings
@@ -84,13 +86,19 @@ def generate_launch_description():
     #以前はYamlRewrittenによって上書きされていたが、ファイルごとに固有のパラメータ
     declare_robot1_params_file_cmd = DeclareLaunchArgument(
         'robot1_params_file',
-        default_value=os.path.join(bringup_dir, 'params', 'nav2_multirobot_params_1.yaml'),
+        default_value=os.path.join(bringup_dir, 'params', 'nav2_multirobot_params_keepout_1.yaml'),
         description='Full path to the ROS2 parameters file to use for robot1 launched nodes')
 
     declare_robot2_params_file_cmd = DeclareLaunchArgument(
         'robot2_params_file',
-        default_value=os.path.join(bringup_dir, 'params', 'nav2_multirobot_params_2.yaml'),
+        default_value=os.path.join(bringup_dir, 'params', 'nav2_multirobot_params_keepout_2.yaml'),
         description='Full path to the ROS2 parameters file to use for robot2 launched nodes')
+    
+    #Keep out param関連
+    declare_robot1_keepout_params_file_cmd = DeclareLaunchArgument(
+        'robot1_keepout_params_file',
+        default_value=os.path.join(bringup_dir, 'params', 'keepout_robot1.yaml'),
+        description='Full path to the ROS2 parameters file to use for robot1 launched nodes')
 
     declare_autostart_cmd = DeclareLaunchArgument(
         'autostart', default_value='false',
@@ -137,7 +145,6 @@ def generate_launch_description():
     nav_instances_cmds = []
     for robot in robots:
         params_file = LaunchConfiguration(f"{robot['name']}_params_file")
-
         group = GroupAction([
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(
@@ -197,6 +204,13 @@ def generate_launch_description():
                 condition=UnlessCondition(use_gazebo), #追加 
             ),
 
+            # IncludeLaunchDescription(
+            #     PythonLaunchDescriptionSource([ThisLaunchFileDir(), KEEPOUT_FILTER_LAUNCH]),
+            #     launch_arguments={'namespace': robot['name'],
+            #                       'params_file': keepout_params_file,
+            #                       'mask': mask_yaml_file}.items(), #<<編集箇所-6
+            # ),
+
             LogInfo(
                 condition=IfCondition(log_settings),
                 msg=['Launching ', robot['name']]),
@@ -224,7 +238,7 @@ def generate_launch_description():
 
     # Declare the launch options
     #ld.add_action(declare_world_cmd)
-    ld.add_action(declare_map_yaml_cmd)
+    ld.add_action(declare_map_yaml_cmd)    
 
     # ロボットの台数分必要なので注意
     ld.add_action(declare_robot1_params_file_cmd)

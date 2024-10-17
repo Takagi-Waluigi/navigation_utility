@@ -65,11 +65,11 @@ def generate_launch_description():
         'use_sim_time': use_sim_time,
         'yaml_filename': mask_yaml_file}
 
-    configured_params = RewrittenYaml(
-        source_file=params_file,
-        root_key=namespace,
-        param_rewrites=param_substitutions,
-        convert_types=True)
+    # configured_params = RewrittenYaml(
+    #     source_file=params_file,
+    #     root_key=namespace,
+    #     param_rewrites=param_substitutions,
+    #     convert_types=True)
 
     load_nodes = GroupAction(
         condition=IfCondition(PythonExpression(['not ', use_composition])),
@@ -81,7 +81,12 @@ def generate_launch_description():
                 namespace=namespace,
                 output='screen',
                 emulate_tty=True,  # https://github.com/ros2/launch/issues/188
-                parameters=[configured_params]),
+                parameters=[params_file],
+                remappings=[
+                    ('/tf', 'tf'),
+                    ('/tf_static', 'tf_static')],
+                ),
+                
             Node(
                 package='nav2_map_server',
                 executable='costmap_filter_info_server',
@@ -89,7 +94,11 @@ def generate_launch_description():
                 namespace=namespace,
                 output='screen',
                 emulate_tty=True,  # https://github.com/ros2/launch/issues/188
-                parameters=[configured_params]),
+                parameters=[params_file],
+                remappings=[
+                    ('/tf', 'tf'),
+                    ('/tf_static', 'tf_static')],
+                ),
             Node(
                 package='nav2_lifecycle_manager',
                 executable='lifecycle_manager',
@@ -99,7 +108,12 @@ def generate_launch_description():
                 emulate_tty=True,  # https://github.com/ros2/launch/issues/188
                 parameters=[{'use_sim_time': use_sim_time},
                             {'autostart': autostart},
-                            {'node_names': lifecycle_nodes}])
+                            {'node_names': lifecycle_nodes}],
+                remappings=[
+                    ('/tf', 'tf'),
+                    ('/tf_static', 'tf_static')],
+                ),
+                
         ]
     )
 
@@ -116,19 +130,32 @@ def generate_launch_description():
                         package='nav2_map_server',
                         plugin='nav2_map_server::MapServer',
                         name='filter_mask_server',
-                        parameters=[configured_params]),
+                        parameters=[params_file],
+                        remappings=[
+                            ('/tf', 'tf'),
+                            ('/tf_static', 'tf_static')],
+                    ),
                     ComposableNode(
                         package='nav2_map_server',
                         plugin='nav2_map_server::CostmapFilterInfoServer',
                         name='costmap_filter_info_server',
-                        parameters=[configured_params]),
+                        parameters=[params_file],
+                        remappings=[
+                            ('/tf', 'tf'),
+                            ('/tf_static', 'tf_static')],
+                    ),
                     ComposableNode(
                         package='nav2_lifecycle_manager',
                         plugin='nav2_lifecycle_manager::LifecycleManager',
                         name='lifecycle_manager_costmap_filters',
                         parameters=[{'use_sim_time': use_sim_time},
                                     {'autostart': autostart},
-                                    {'node_names': lifecycle_nodes}]),
+                                    {'node_names': lifecycle_nodes}],
+                        remappings=[
+                            ('/tf', 'tf'),
+                            ('/tf_static', 'tf_static')],
+                    ),
+                        
                 ]
             )
         ]
