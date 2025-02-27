@@ -42,7 +42,7 @@ def generate_launch_description():
     # name以外はGazeboの初期位置なので実機では設定不要
     robots = [
         {'name': 'robot1', 'x_pose': 7.0, 'y_pose': 2.5, 'z_pose': 0.01, 'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0},
-        #{'name': 'robot2', 'x_pose': 7.0, 'y_pose': -2.5, 'z_pose': 0.01,'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0}
+        {'name': 'robot2', 'x_pose': 7.0, 'y_pose': -2.5, 'z_pose': 0.01,'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0}
         ]
 
     # Simulation settings
